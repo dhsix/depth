@@ -2,14 +2,14 @@
 
 # 基本设置
 model_name: "depth2elevation"
-experiment_name: "depth2elevation_gamus_vitl_50ep"
+experiment_name: "depth2elevation_gamus_vitb_50ep"
 seed: 42
 device: "cuda"
 
 # 数据设置
 data_root: "/data/remote_sensing_datasets"
 dataset_name: "GAMUS"
-input_size: 518
+input_size: 448
 patch_size: 14
 batch_size: 16
 num_workers: 8
@@ -33,10 +33,10 @@ result_dir: "./experiments"
 
 # 模型配置
 model_config:
-  encoder: "vitl"  # vits, vitb, vitl, vitg
-  img_size: 518
+  encoder: "vitb"  # vits, vitb, vitl, vitg
+  img_size: 448
   patch_size: 14
-  pretrained_path: "/pretrained_models/depthanything_vitl.pth"
+  pretrained_path: "/pretrained_models/depthanything_vitb.pth"
   freeze_encoder: false
 
 # 损失函数配置

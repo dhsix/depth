@@ -10,8 +10,8 @@ class Depth2ElevationConfig(BaseConfig):
     
     # 模型特定配置
     model_config: Dict[str, Any] = field(default_factory=lambda: {
-        'encoder': 'vitl',  # vits, vitb, vitl, vitg
-        'img_size': 518,
+        'encoder': 'vitb',  # vits, vitb, vitl, vitg
+        'img_size': 448,
         'patch_size': 14,
         'pretrained_path': None,  # DAM预训练权重路径
         'freeze_encoder': False,  # 是否冻结编码器

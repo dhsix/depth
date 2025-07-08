@@ -144,8 +144,8 @@ def get_transforms(config: Dict[str, Any], is_training: bool = True) -> T.Compos
     
     # 基础变换
     transforms.extend([
-        Resize(width=config.get('input_size', 518), 
-               height=config.get('input_size', 518),
+        Resize(width=config.get('input_size', 448), 
+               height=config.get('input_size', 448),
                resize_target=True,
                keep_aspect_ratio=True,
                ensure_multiple_of=config.get('patch_size', 14)),

@@ -2,14 +2,14 @@
 
 # 基本设置
 model_name: "depth_anything_v2"
-experiment_name: "depth_anything_v2_gamus_vitl_50ep"
+experiment_name: "depth_anything_v2_gamus_vitb_50ep"
 seed: 42
 device: "cuda"
 
 # 数据设置
 data_root: "/data/remote_sensing_datasets"
 dataset_name: "GAMUS"
-input_size: 518
+input_size: 448
 patch_size: 14
 batch_size: 16
 num_workers: 8
@@ -33,8 +33,8 @@ result_dir: "./experiments"
 
 # 模型配置
 model_config:
-  encoder: "vitl"
-  pretrained_path: "/pretrained_models/depthanything_vitl.pth"
+  encoder: "vitb"
+  pretrained_path: "/pretrained_models/depthanything_vitb.pth"
   freeze_encoder: false
 
 # 损失函数配置

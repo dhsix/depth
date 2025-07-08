@@ -15,7 +15,7 @@ class BaseConfig:
     # 数据设置
     data_root: str = "/data/remote_sensing_datasets"  # 存储服务器上的数据根目录
     dataset_name: str = "GAMUS"  # GAMUS, DFC2019, Vaihingen
-    input_size: int = 518
+    input_size: int = 448
     patch_size: int = 14
     batch_size: int = 16
     num_workers: int = 8

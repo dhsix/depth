@@ -53,7 +53,7 @@ class BaseDepthModel(nn.Module, ABC):
     @torch.no_grad()
     def infer_image(self, 
                    raw_image: np.ndarray, 
-                   input_size: int = 518) -> np.ndarray:
+                   input_size: int = 448) -> np.ndarray:
         """单张图像推理接口
         
         Args:
@@ -84,7 +84,7 @@ class BaseDepthModel(nn.Module, ABC):
         
         return prediction.cpu().numpy()
     
-    def image2tensor(self, raw_image: np.ndarray, input_size: int = 518) -> Tuple[torch.Tensor, Tuple[int, int]]:
+    def image2tensor(self, raw_image: np.ndarray, input_size: int = 448) -> Tuple[torch.Tensor, Tuple[int, int]]:
         """图像预处理，转换为tensor"""
         # 这里可以复用data/transforms.py中的逻辑
         # 或者子类重写这个方法
