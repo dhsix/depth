@@ -1,0 +1,62 @@
+# Depth2Elevation - GAMUS Dataset Configuration
+
+# 基本设置
+model_name: "depth2elevation"
+experiment_name: "depth2elevation_gamus_vitl_50ep"
+seed: 42
+device: "cuda"
+
+# 数据设置
+data_root: "/data/remote_sensing_datasets"
+dataset_name: "GAMUS"
+input_size: 518
+patch_size: 14
+batch_size: 16
+num_workers: 8
+
+# 训练设置
+num_epochs: 50
+learning_rate: 5.0e-6
+weight_decay: 0.01
+optimizer: "adamw"
+scheduler: "constant"
+
+# 验证和保存
+val_interval: 5
+save_interval: 10
+max_keep_ckpts: 3
+
+# 路径设置
+checkpoint_dir: "./checkpoints"
+log_dir: "./logs"
+result_dir: "./experiments"
+
+# 模型配置
+model_config:
+  encoder: "vitl"  # vits, vitb, vitl, vitg
+  img_size: 518
+  patch_size: 14
+  pretrained_path: "/pretrained_models/depthanything_vitl.pth"
+  freeze_encoder: false
+
+# 损失函数配置
+loss_config:
+  type: "multi_scale_loss"
+  gamma: 1.0      # L_ai权重
+  delta: 1.0      # L_si权重  
+  mu: 0.05        # L_grad权重
+  beta: 0.15      # SI loss中的beta
+  epsilon: 1.0e-7 # log计算中的epsilon
+  lambda_grad: 1.0e-3  # 梯度损失权重
+
+# 训练器配置
+trainer_type: "multi_scale_depth"
+use_multi_scale_output: true
+compute_metrics_interval: 1
+log_scale_losses: true
+
+# 数据增强配置
+augmentation_config:
+  horizontal_flip: 0.5
+  color_jitter: 0.5
+  gaussian_blur: 0.0

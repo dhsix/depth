@@ -1,0 +1,53 @@
+# Depth Anything V2 - GAMUS Dataset Configuration
+
+# 基本设置
+model_name: "depth_anything_v2"
+experiment_name: "depth_anything_v2_gamus_vitl_50ep"
+seed: 42
+device: "cuda"
+
+# 数据设置
+data_root: "/data/remote_sensing_datasets"
+dataset_name: "GAMUS"
+input_size: 518
+patch_size: 14
+batch_size: 16
+num_workers: 8
+
+# 训练设置
+num_epochs: 50
+learning_rate: 5.0e-6
+weight_decay: 0.01
+optimizer: "adamw"
+scheduler: "constant"
+
+# 验证和保存
+val_interval: 5
+save_interval: 10
+max_keep_ckpts: 3
+
+# 路径设置
+checkpoint_dir: "./checkpoints"
+log_dir: "./logs"
+result_dir: "./experiments"
+
+# 模型配置
+model_config:
+  encoder: "vitl"
+  pretrained_path: "/pretrained_models/depthanything_vitl.pth"
+  freeze_encoder: false
+
+# 损失函数配置
+loss_config:
+  type: "single_scale_loss"
+  criterion: "mse"
+
+# 训练器配置
+trainer_type: "depth"
+use_multi_scale_output: false
+
+# 数据增强配置
+augmentation_config:
+  horizontal_flip: 0.5
+  color_jitter: 0.5
+  gaussian_blur: 0.0

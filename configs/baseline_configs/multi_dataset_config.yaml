@@ -1,0 +1,17 @@
+# 多数据集训练配置
+model_name: "depth2elevation"
+experiment_name: "depth2elevation_multi_dataset"
+
+# 数据设置 - 支持多数据集
+datasets:
+  - name: "GAMUS"
+    data_root: "/data/remote_sensing_datasets"
+    weight: 1.0
+  - name: "DFC2019"
+    data_root: "/data/remote_sensing_datasets"
+    weight: 0.8
+  - name: "Vaihingen"
+    data_root: "/data/remote_sensing_datasets"
+    weight: 0.6
+
+# 其他设置同上...
