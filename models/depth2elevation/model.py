@@ -16,7 +16,7 @@ class Depth2ElevationEncoder(nn.Module):
     def __init__(self, 
                  embed_dim: int,
                  num_heads: int,
-                 img_size: int = 518,
+                 img_size: int = 448,
                  patch_size: int = 14,
                  in_chans: int = 3,
                  num_register_tokens: int = 0,
@@ -157,8 +157,8 @@ class Depth2Elevation(BaseDepthModel):
         model_config = config.get('model_config', {})
         
         # 模型参数
-        self.encoder_type = model_config.get('encoder', 'vitl')
-        self.img_size = model_config.get('img_size', 518)
+        self.encoder_type = model_config.get('encoder', 'vitb')
+        self.img_size = model_config.get('img_size', 448)
         self.patch_size = model_config.get('patch_size', 14)
         self.use_multi_scale_output = config.get('use_multi_scale_output', True)
         

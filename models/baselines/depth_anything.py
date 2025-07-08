@@ -15,7 +15,7 @@ class DepthAnythingV2(BaseDepthModel):
         # 这里应该导入你原有的Depth Anything V2实现
         # 为了演示，我们创建一个简化版本
         
-        self.encoder_type = model_config.get('encoder', 'vitl')
+        self.encoder_type = model_config.get('encoder', 'vitb')
         
         # 实际实现中，这里应该是你的DINOv2编码器和DPT解码器
         self.encoder = self._create_encoder()

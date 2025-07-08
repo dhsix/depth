@@ -58,7 +58,7 @@ def parse_args():
     parser.add_argument('--weight_decay', type=float, default=0.01, help='Weight decay')
     
     # 模型参数
-    parser.add_argument('--encoder', type=str, default='vitl',
+    parser.add_argument('--encoder', type=str, default='vitb',
                        choices=['vits', 'vitb', 'vitl', 'vitg'],
                        help='Encoder type for Depth2Elevation')
     parser.add_argument('--pretrained_path', type=str, help='Path to pretrained weights')

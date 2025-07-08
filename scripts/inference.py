@@ -34,7 +34,7 @@ def parse_args():
                        help='Output directory')
     
     # 推理参数
-    parser.add_argument('--input_size', type=int, default=518, help='Input size for model')
+    parser.add_argument('--input_size', type=int, default=448, help='Input size for model')
     parser.add_argument('--device', type=str, default='cuda', help='Device to use')
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size (for directory input)')
     
