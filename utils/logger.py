@@ -32,13 +32,13 @@ def setup_logger(name: str,
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
     
-    # 文件输出
-    if log_file:
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(level)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
+    # # 文件输出
+    # if log_file:
+    #     os.makedirs(os.path.dirname(log_file), exist_ok=True)
+    #     file_handler = logging.FileHandler(log_file)
+    #     file_handler.setLevel(level)
+    #     file_handler.setFormatter(formatter)
+    #     logger.addHandler(file_handler)
     
     return logger
 
