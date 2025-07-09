@@ -18,13 +18,17 @@ class ProjectionBlock(nn.Module):
 
 class RefineBlock(nn.Module):
     """Refine Block - 基于论文Figure 4右下"""
-    def __init__(self, in_channels: int):
+    def __init__(self, in_channels: int,deeper_channels:int=None):
         super().__init__()
         self.conv_relu = nn.Sequential(
             nn.Conv2d(in_channels, in_channels, 3, 1, 1),
             nn.ReLU(True)
         )
-        
+        # 如果deeper特征的通道数与当前不同，需要1x1卷积对齐
+        if deeper_channels is not None and deeper_channels != in_channels:
+            self.channel_proj = nn.Conv2d(deeper_channels, in_channels, 1, 1, 0)
+        else:
+            self.channel_proj = None
     def forward(self, fn: torch.Tensor, fn_plus_1: torch.Tensor = None) -> torch.Tensor:
         """
         Args:
@@ -34,6 +38,8 @@ class RefineBlock(nn.Module):
         if fn_plus_1 is not None:
             # 论文描述：features of current layer combined with deeper features
             # after residual connection
+            if self.channel_proj is not None:
+                fn_plus_1 = self.channel_proj(fn_plus_1)
             combined = fn + fn_plus_1
             return self.conv_relu(combined)
         else:
@@ -65,8 +71,14 @@ class ResolutionAgnosticDecoder(nn.Module):
         ])
         
         # Refine Blocks for multi-scale fusion
+        # self.refine_blocks = nn.ModuleList([
+        #     RefineBlock(out_channel) for out_channel in self.out_channels
+        # ])
         self.refine_blocks = nn.ModuleList([
-            RefineBlock(out_channel) for out_channel in self.out_channels
+            RefineBlock(self.out_channels[0]),  # 最深层，无deeper输入
+            RefineBlock(self.out_channels[1], self.out_channels[0]),  # 512, deeper=256
+            RefineBlock(self.out_channels[2], self.out_channels[1]),  # 1024, deeper=512
+            RefineBlock(self.out_channels[3], self.out_channels[2])   # 1024, deeper=1024
         ])
         
         # Final prediction heads for each scale

@@ -24,5 +24,7 @@ def create_model(config: Dict[str, Any]) -> BaseDepthModel:
 __all__ = [
     'BaseDepthModel',
     'create_model',
-    'get_loss_function'
+    'create_depth2elevation_model',
+    'get_loss_function',
+
 ]

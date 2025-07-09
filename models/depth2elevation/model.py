@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Union, Tuple, List
 
 from ..base_model import BaseDepthModel
-from ..losses import get_loss_function
+from ..losses.multi_scale_loss import get_loss_function, SingleScaleLoss
 from .scale_modulator import ScaleModulator
 from .decoder import ResolutionAgnosticDecoder
 
@@ -285,12 +285,25 @@ class Depth2Elevation(BaseDepthModel):
                     predictions: Union[torch.Tensor, Dict[str, torch.Tensor]], 
                     targets: torch.Tensor,
                     masks: Optional[torch.Tensor] = None) -> Dict[str, torch.Tensor]:
-        """计算损失"""
-        if isinstance(predictions, torch.Tensor):
-            # 单尺度预测，转换为字典格式
-            predictions = {'scale_1': predictions}
+            # 检查损失函数类型
+        if isinstance(self.loss_fn, SingleScaleLoss):
+            # 单尺度损失：需要提取一个tensor
+            if isinstance(predictions, dict):
+                # 使用最高分辨率的预测（通常是scale_4或最后一个）
+                main_prediction = predictions.get('scale_4', list(predictions.values())[-1])
+            else:
+                main_prediction = predictions
+            
+            return self.loss_fn(main_prediction, targets, masks)
         
-        return self.loss_fn(predictions, targets, masks)
+        else:
+            # 多尺度损失：需要字典格式
+            if isinstance(predictions, torch.Tensor):
+                # 单尺度预测，转换为字典格式
+                predictions = {'scale_1': predictions}
+            
+            return self.loss_fn(predictions, targets, masks)
+
     
     def get_model_info(self) -> Dict[str, Any]:
         """获取模型信息"""
