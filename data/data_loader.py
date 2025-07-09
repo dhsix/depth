@@ -1,8 +1,8 @@
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from typing import Dict, Any, Tuple, Optional
-from datasets import get_dataset
-from transforms import get_transforms
+from .datasets import get_dataset
+from .transforms import get_transforms
 
 def collate_fn(batch):
     """自定义collate函数"""
