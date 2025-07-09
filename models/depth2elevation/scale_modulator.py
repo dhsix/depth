@@ -34,7 +34,7 @@ class HeightBlock(nn.Module):
         
         # 导入DINOv2的组件（假设已经实现）
         try:
-            from ..dinov2_layers import MemEffAttention, Mlp
+            from .dinov2_layers import MemEffAttention, Mlp
         except ImportError:
             # 如果没有DINOv2，使用标准实现
             from torch.nn import MultiheadAttention
