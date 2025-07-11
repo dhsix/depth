@@ -19,7 +19,7 @@ class BaseConfig:
     patch_size: int = 14
     batch_size: int = 16
     num_workers: int = 8
-    
+    trainer_type:str ="depth"
     # 训练设置
     num_epochs: int = 50
     learning_rate: float = 5e-6

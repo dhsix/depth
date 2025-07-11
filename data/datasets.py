@@ -94,9 +94,11 @@ class GAMUSDataset(BaseDepthDataset):
             raise FileNotFoundError(f"Depth directory not found: {depth_dir}")
         
         samples = []
-        for image_path in sorted(image_dir.glob("*.tif")):
+        for image_path in sorted(image_dir.glob("*.jpg")):
             # 对应的深度文件
-            depth_path = depth_dir / f"{image_path.stem}.tif"
+            # depth_path = depth_dir / f"{image_path.stem}.tif"
+            depth_filename=image_path.name.replace("RGB","AGL").replace(".jpg","png")
+            depth_path=depth_dir/depth_filename
             
             if depth_path.exists():
                 samples.append({

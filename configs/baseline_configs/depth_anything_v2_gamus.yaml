@@ -34,17 +34,24 @@ result_dir: "./experiments"
 # 模型配置
 model_config:
   encoder: "vitb"
+  img_size: 448
+  patch_size: 14
   pretrained_path: "/pretrained_models/depthanything_vitb.pth"
   freeze_encoder: false
 
 # 损失函数配置
 loss_config:
-  type: "single_scale_loss"
-  criterion: "mse"
+  type: "multi_scale_loss"
+  gamma: 1.0      # L_ai权重
+  delta: 1.0      # L_si权重  
+  mu: 0.05        # L_grad权重
+  beta: 0.15      # SI loss中的beta
+  epsilon: 1.0e-7 # log计算中的epsilon
+  lambda_grad: 1.0e-3  # 梯度损失权重
 
 # 训练器配置
-trainer_type: "depth"
-use_multi_scale_output: false
+trainer_type: "multi_scale_depth"
+use_multi_scale_output: true
 
 # 数据增强配置
 augmentation_config:
