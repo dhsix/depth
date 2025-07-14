@@ -1,4 +1,4 @@
-# models/imele/__init__.py
+
 from .im2height_model import Im2HeightModel
 
 def create_im2height_model(config):
