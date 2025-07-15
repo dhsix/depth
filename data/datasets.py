@@ -166,13 +166,42 @@ class VaihingenDataset(BaseDepthDataset):
         
         print(f"Loaded {len(samples)} samples from Vaihingen {self.split}")
         return samples
-
+class GoogleHeightDataset(BaseDepthDataset):
+    """Google Height数据集"""
+    
+    def _load_samples(self) -> list:
+        # GoogleHeightData的数据加载逻辑
+        split_dir = self.data_root / self.split
+        
+        # 数据结构：GoogleHeightData/train/images/ 和 GoogleHeightData/train/labels/
+        image_dir = split_dir / "images"
+        label_dir = split_dir / "labels"
+        
+        if not image_dir.exists():
+            raise FileNotFoundError(f"Image directory not found: {image_dir}")
+        if not label_dir.exists():
+            raise FileNotFoundError(f"Label directory not found: {label_dir}")
+        
+        samples = []
+        for image_path in sorted(image_dir.glob("*.tif")):
+            # 对应的深度文件应该有相同的文件名
+            label_path = label_dir / image_path.name
+            
+            if label_path.exists():
+                samples.append({
+                    'image_path': str(image_path),
+                    'depth_path': str(label_path)
+                })
+        
+        print(f"Loaded {len(samples)} samples from GoogleHeightData {self.split}")
+        return samples
 def get_dataset(dataset_name: str, **kwargs) -> BaseDepthDataset:
     """工厂函数：根据名称获取数据集"""
     datasets = {
         'GAMUS': GAMUSDataset,
         'DFC2019': DFC2019Dataset, 
-        'Vaihingen': VaihingenDataset
+        'Vaihingen': VaihingenDataset,
+        'GoogleHeight':GoogleHeightDataset,
     }
     
     if dataset_name not in datasets:
