@@ -5,9 +5,8 @@ from .baselines.depth_anything import create_depth_anything_model
 from .GradientAdaptiveEdgeModule import create_depth2elevation_gra_model
 from .imele import create_imele_model
 from .im2height import create_im2height_model
-# from .baselines.htc_dc import create_htc_dc_model
-# from .baselines.imele import create_imele_model
 from .losses import get_loss_function
+from .GradientAdaptiveEdgeModule import create_depth2elevation_multiscale_model
 
 def create_model(config: Dict[str, Any]) -> BaseDepthModel:
     """模型工厂函数"""
@@ -20,6 +19,7 @@ def create_model(config: Dict[str, Any]) -> BaseDepthModel:
         # 'htc_dc': create_htc_dc_model,
         'imele': create_imele_model,
         'im2height': create_im2height_model,
+        'depth2elevation_multiscale': create_depth2elevation_multiscale_model,
     }
     
     if model_name not in model_creators:
@@ -32,6 +32,8 @@ __all__ = [
     'create_model',
     'get_loss_function',
     'create_depth2elevation_model',
+    'create_depth2elevation_gra_model',
+    'create_depth2elevation_multiscale_model',
     'create_imele_model',
     'create_im2height_model',
 

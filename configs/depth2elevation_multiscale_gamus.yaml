@@ -1,0 +1,81 @@
+# Depth2Elevation - GAMUS Dataset Configuration
+
+# 基本设置
+model_name: "depth2elevation_multiscale"
+# model_variant: "gradient_adaptive"
+experiment_name: "depth2elevation_multiscale_gamus_vitb_50ep"
+seed: 42
+device: "cuda"
+
+# 数据设置
+data_root: 'D:/Height/test_data/'
+dataset_name: "GAMUS"
+input_size: 448
+patch_size: 14
+batch_size: 1
+num_workers: 1
+
+# 训练设置
+num_epochs: 50
+learning_rate: 5.0e-6
+weight_decay: 0.01
+optimizer: "adamw"
+scheduler: "constant"
+
+# 验证和保存
+val_interval: 5
+save_interval: 10
+max_keep_ckpts: 3
+
+# 路径设置
+checkpoint_dir: "./checkpoints"
+log_dir: "./logs"
+result_dir: "./experiments"
+
+# 模型配置
+model_config:
+  encoder: "vitb"  # vits, vitb, vitl, vitg
+  img_size: 448
+  patch_size: 14
+  # pretrained_path: "/pretrained_models/depthanything_vitl.pth"
+  freeze_encoder: false
+# 【新增3】分布感知重加权配置
+reweight_config:
+  enable: true                    # 是否启用分布重加权
+  num_height_bins: 50            # 高度区间数量
+  max_height: 100.0              # 最大高度值(米)
+  alpha: 0.7                     # 重加权损失权重
+  lds_kernel: "gaussian"         # LDS平滑核类型: gaussian, triang, laplace
+  lds_ks: 5                      # LDS核大小
+  lds_sigma: 2.0                 # LDS高斯核标准差
+  base_loss: "smooth_l1"         # 基础损失函数: smooth_l1, mse, mae
+  scale_weights:                 # 多尺度权重
+    scale_1: 0.125
+    scale_2: 0.25
+    scale_3: 0.5
+    scale_4: 1.0
+  focal_params:                  # Focal回归损失参数
+    alpha: 0.25                  # focal权重
+    gamma: 2.0                   # focal调制指数
+    height_threshold: 20.0       # 高建筑阈值(米)
+# 损失函数配置
+loss_config:
+  type: "multi_scale_loss"
+  gamma: 1.0      # L_ai权重
+  delta: 1.0      # L_si权重  
+  mu: 0.05        # L_grad权重
+  beta: 0.15      # SI loss中的beta
+  epsilon: 1.0e-7 # log计算中的epsilon
+  lambda_grad: 1.0e-3  # 梯度损失权重
+
+# 训练器配置
+trainer_type: "multi_scale_depth"
+use_multi_scale_output: true
+# compute_metrics_interval: 1
+# log_scale_losses: true
+
+# 数据增强配置
+augmentation_config:
+  horizontal_flip: 0.5
+  color_jitter: 0.5
+  gaussian_blur: 0.0
