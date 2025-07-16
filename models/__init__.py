@@ -6,7 +6,7 @@ from .GradientAdaptiveEdgeModule import create_depth2elevation_gra_model
 from .imele import create_imele_model
 from .im2height import create_im2height_model
 from .losses import get_loss_function
-from .GradientAdaptiveEdgeModule import create_depth2elevation_multiscale_model
+from .Gra_MultiScaleHeight import create_depth2elevation_multiscale_model
 
 def create_model(config: Dict[str, Any]) -> BaseDepthModel:
     """模型工厂函数"""
