@@ -95,7 +95,8 @@ def load_config_from_file(config_path: str) -> BaseConfig:
         
         # 根据模型类型创建相应的配置
         model_name = config_dict.get('model_name', 'depth2elevation')
-        if model_name == 'depth2elevation':
+        # if model_name == 'depth2elevation':
+        if model_name in ['depth2elevation','depth2elevation_multiscale','depth2elevation_gra']:
             return Depth2ElevationConfig(**config_dict)
         else:
             return BaseConfig(**config_dict)

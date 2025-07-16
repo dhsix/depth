@@ -318,7 +318,7 @@ class Depth2Elevation_MultiScale(BaseDepthModel):
             if isinstance(predictions, torch.Tensor):
                 # 单尺度预测，转换为字典格式
                 predictions = {'scale_1': predictions}
-            original_loss_dict = self.loss_fn(main_prediction, targets, masks)
+            original_loss_dict = self.loss_fn(predictions, targets, masks)
         original_loss=original_loss_dict['loss']
         # === 【新增】分布感知重加权损失 ===
         if self.enable_reweighting:

@@ -42,3 +42,4 @@ class Depth2ElevationConfig(BaseConfig):
         'color_jitter': 0.5,
         'gaussian_blur': 0.5,
     })
+    

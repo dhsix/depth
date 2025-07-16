@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from functools import partial
 from typing import List
-
+import torch.nn.functional as F
 class ScaleAdapter(nn.Module):
     """Scale Adapter - 基于论文Figure 3(c)的精确实现"""
     def __init__(self, embed_dim: int):
