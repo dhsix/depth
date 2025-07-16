@@ -52,7 +52,8 @@ class BaseConfig:
         os.makedirs(self.result_dir, exist_ok=True)
         
         # 检查数据集路径(但不创建，因为数据在存储服务器上)
-        dataset_path = self.get_dataset_path()
+        # dataset_path = self.get_dataset_path()
+        dataset_path=self.data_root
         if not os.path.exists(dataset_path):
             print(f"Warning: Dataset path {dataset_path} not accessible!")
             print(f"Please ensure:")
@@ -65,9 +66,9 @@ class BaseConfig:
             print(f"    val/images/, val/depths/")
             print(f"    test/images/, test/depths/")
         
-    def get_dataset_path(self) -> str:
-        """获取当前数据集的完整路径"""
-        return os.path.join(self.data_root, self.dataset_name)
+    # def get_dataset_path(self) -> str:
+    #     """获取当前数据集的完整路径"""
+    #     return os.path.join(self.data_root, self.dataset_name)
     
     @classmethod
     def from_yaml(cls, yaml_path: str):
