@@ -8,8 +8,8 @@ seed: 42
 device: "cuda:2"
 
 # 数据设置
-data_root: '/mnt/data1/UserData/hudong26/GoogleHeightData_Strategy1/'
-dataset_name: "GoogleHeight"
+data_root: '/home/hudong26/HeightData/GAMUS'
+dataset_name: "GAMUS"
 input_size: 448
 patch_size: 14
 batch_size: 4
