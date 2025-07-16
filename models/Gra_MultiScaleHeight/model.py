@@ -319,7 +319,7 @@ class Depth2Elevation_MultiScale(BaseDepthModel):
                 # 单尺度预测，转换为字典格式
                 predictions = {'scale_1': predictions}
             original_loss_dict = self.loss_fn(predictions, targets, masks)
-        original_loss=original_loss_dict['loss']
+        original_loss=original_loss_dict['total_loss']
         # === 【新增】分布感知重加权损失 ===
         if self.enable_reweighting:
             # 确保predictions是字典格式
@@ -350,11 +350,9 @@ class Depth2Elevation_MultiScale(BaseDepthModel):
             }
         else:
             # 仅使用原有损失
-            loss_dict = {
-                'loss': original_loss,
-                **original_loss_dict
-            }
-        
+
+            # 直接返回原始损失函数的输出（保持接口不变）
+            loss_dict = original_loss_dict
         return loss_dict
         
     def get_model_info(self) -> Dict[str, Any]:
