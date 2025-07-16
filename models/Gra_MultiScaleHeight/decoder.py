@@ -71,13 +71,14 @@ class GradientAdaptiveEdgeModule(nn.Module):
         sobel_y = sobel_y.view(1, 1, 3, 3).repeat(self.gradient_conv_y.out_channels, 1, 1, 1)
         self.gradient_conv_y.weight.data = sobel_y
         
+
     def compute_gradient_consistency(self, grad_x: torch.Tensor, grad_y: torch.Tensor) -> torch.Tensor:
         """计算梯度一致性特征"""
-        # 计算梯度幅值
-        grad_magnitude = torch.sqrt(grad_x ** 2 + grad_y ** 2 + 1e-6)
+        B, C, H, W = grad_x.shape
         
-        # 计算梯度方向
-        grad_direction = torch.atan2(grad_y, grad_x)
+        # 对所有通道计算平均梯度
+        grad_magnitude = torch.sqrt(grad_x ** 2 + grad_y ** 2 + 1e-6).mean(dim=1, keepdim=True)  # [B, 1, H, W]
+        grad_direction = torch.atan2(grad_y, grad_x).mean(dim=1, keepdim=True)  # [B, 1, H, W]
         
         # 计算局部方向一致性（使用滑动窗口）
         kernel_size = 5
@@ -88,19 +89,20 @@ class GradientAdaptiveEdgeModule(nn.Module):
         magnitude_patches = unfold(grad_magnitude)  # [B, k*k, H*W]
         
         # 计算加权方向标准差（低标准差=高一致性）
-        weighted_mean = (direction_patches * magnitude_patches).sum(dim=1) / (magnitude_patches.sum(dim=1) + 1e-6)
+        weighted_mean = (direction_patches * magnitude_patches).sum(dim=1) / (magnitude_patches.sum(dim=1) + 1e-6)  # [B, H*W]
         weighted_std = torch.sqrt(
             ((direction_patches - weighted_mean.unsqueeze(1)) ** 2 * magnitude_patches).sum(dim=1) / 
             (magnitude_patches.sum(dim=1) + 1e-6)
-        )
+        )  # [B, H*W]
         
         # 重塑回空间维度
-        B, C, H, W = grad_x.shape
-        consistency = 1.0 - torch.tanh(weighted_std)  # 高一致性=1，低一致性=0
-        consistency = consistency.view(B, C, H, W)
+        consistency = 1.0 - torch.tanh(weighted_std)  # [B, H*W]
+        consistency = consistency.view(B, 1, H, W)  # [B, 1, H, W]
         
-        return consistency
+        # 扩展到所有通道
+        consistency = consistency.expand(B, C, H, W)  # [B, C, H, W]
         
+        return consistency        
     def forward(self, x: torch.Tensor,global_map:torch.Tensor = None) -> torch.Tensor:
         if global_map is not None:
             #调整全局图大小来匹配特征

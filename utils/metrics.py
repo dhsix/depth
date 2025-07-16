@@ -167,15 +167,38 @@ class MetricsTracker:
                 self.metrics[key] = 0.0
                 self.counts[key] = 0
             
-            self.metrics[key] += value * batch_size
-            self.counts[key] += batch_size
+            # 只处理数值类型的指标，跳过字典、列表等复杂类型
+            if isinstance(value, (int, float)):
+                self.metrics[key] += value * batch_size
+                self.counts[key] += batch_size
+            elif isinstance(value, torch.Tensor) and value.numel() == 1:
+                # 处理单元素张量
+                self.metrics[key] += value.item() * batch_size
+                self.counts[key] += batch_size
+            else:
+                # 对于复杂类型（dict、list等），直接存储最新值，不累计
+                self.metrics[key] = value
+                self.counts[key] = 1  # 设置为1，避免除零
+
+            # self.metrics[key] += value * batch_size
+            # self.counts[key] += batch_size
     
     def compute(self) -> Dict[str, float]:
         """计算平均指标"""
         averaged_metrics = {}
         for key in self.metrics:
+            # if self.counts[key] > 0:
+            #     averaged_metrics[key] = self.metrics[key] / self.counts[key]
+            # else:
+            #     averaged_metrics[key] = 0.0
+
             if self.counts[key] > 0:
-                averaged_metrics[key] = self.metrics[key] / self.counts[key]
+                # 只对数值类型计算平均值
+                if isinstance(self.metrics[key], (int, float)):
+                    averaged_metrics[key] = self.metrics[key] / self.counts[key]
+                else:
+                    # 对于复杂类型，直接返回最新值
+                    averaged_metrics[key] = self.metrics[key]
             else:
                 averaged_metrics[key] = 0.0
         
