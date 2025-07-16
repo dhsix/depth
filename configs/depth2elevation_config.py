@@ -42,4 +42,26 @@ class Depth2ElevationConfig(BaseConfig):
         'color_jitter': 0.5,
         'gaussian_blur': 0.5,
     })
-    
+    # 新增：分布重加权配置
+    reweight_config: Dict[str, Any] = field(default_factory=lambda: {
+        'enable': False,
+        'num_height_bins': 50,
+        'max_height': 100.0,
+        'alpha': 0.7,
+        'lds_kernel': 'gaussian',
+        'lds_ks': 5,
+        'lds_sigma': 2.0,
+        'base_loss': 'smooth_l1',
+        'scale_weights': {
+            'scale_1': 0.125,
+            'scale_2': 0.25, 
+            'scale_3': 0.5,
+            'scale_4': 1.0
+        },
+        'focal_params': {
+            'alpha': 0.25,
+            'gamma': 2.0,
+            'height_threshold': 20.0
+        }
+    })
+
