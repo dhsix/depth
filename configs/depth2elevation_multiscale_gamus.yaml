@@ -5,14 +5,14 @@ model_name: "depth2elevation_multiscale"
 # model_variant: "gradient_adaptive"
 experiment_name: "depth2elevation_multiscale_gamus_vitb_50ep"
 seed: 42
-device: "cuda"
+device: "cuda:2"
 
 # 数据设置
-data_root: 'D:/Height/test_data/'
-dataset_name: "GAMUS"
+data_root: '/mnt/data1/UserData/hudong26/GoogleHeightData_Strategy1/'
+dataset_name: "GoogleHeight"
 input_size: 448
 patch_size: 14
-batch_size: 1
+batch_size: 4
 num_workers: 1
 
 # 训练设置
@@ -37,7 +37,7 @@ model_config:
   encoder: "vitb"  # vits, vitb, vitl, vitg
   img_size: 448
   patch_size: 14
-  # pretrained_path: "/pretrained_models/depthanything_vitl.pth"
+  pretrained_path: "/mnt/data1/UserData/hudong26/Height/Depth-Anything-V2/checkpoints/depth_anything_v2_vitb.pth"
   freeze_encoder: false
 # 【新增3】分布感知重加权配置
 reweight_config:
