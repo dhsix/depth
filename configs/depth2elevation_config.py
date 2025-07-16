@@ -33,6 +33,9 @@ class Depth2ElevationConfig(BaseConfig):
     num_epochs: int = 50
     use_multi_scale_output: bool = True
     
+    compute_metrics_interval:int = 1
+    log_scale_losses: bool=True
+
     # 数据增强
     augmentation_config: Dict[str, Any] = field(default_factory=lambda: {
         'horizontal_flip': 0.5,

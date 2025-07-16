@@ -41,7 +41,8 @@ def create_data_loaders(config) -> Tuple[DataLoader, DataLoader, Optional[DataLo
     )
     
     # 获取完整的数据集路径
-    dataset_path = config.get_dataset_path()
+    # dataset_path = config.get_dataset_path()
+    dataset_path=config.data_root
     
     # 创建数据集
     train_dataset = get_dataset(
