@@ -13,6 +13,12 @@ input_size: 448
 patch_size: 14
 batch_size: 8
 num_workers: 1
+# 🆕 精细化冻结策略配置
+freezing_config:
+  strategy: "selective"          # 选项: "none", "simple", "selective"
+  freeze_patch_embed: true       # 是否冻结patch embedding
+  unfreeze_positional: true      # 是否解冻位置编码相关参数
+  print_stats: true             # 是否打印详细的参数统计信息
 
 # 训练设置
 num_epochs: 50

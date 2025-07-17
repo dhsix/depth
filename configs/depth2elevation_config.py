@@ -14,7 +14,7 @@ class Depth2ElevationConfig(BaseConfig):
         'img_size': 448,
         'patch_size': 14,
         'pretrained_path': None,  # DAM预训练权重路径
-        'freeze_encoder': False,  # 是否冻结编码器
+        # 'freeze_encoder': False,  # 是否冻结编码器
     })
     
     # 损失函数配置
@@ -35,6 +35,13 @@ class Depth2ElevationConfig(BaseConfig):
     
     compute_metrics_interval:int = 1
     log_scale_losses: bool=True
+    # 冻结策略配置
+    freezing_config: Dict[str, Any] = field(default_factory=lambda: {
+        'strategy': 'selective',  # 'none', 'simple', 'selective'
+        'freeze_patch_embed': True,  # 是否冻结patch embedding
+        'unfreeze_positional': True,  # 是否解冻位置编码
+        'print_stats': True,  # 是否打印参数统计信息
+    })
 
     # 数据增强
     augmentation_config: Dict[str, Any] = field(default_factory=lambda: {
