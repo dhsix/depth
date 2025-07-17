@@ -222,9 +222,23 @@ class Depth2Elevation_MultiScale(BaseDepthModel):
         if pretrained_path and Path(pretrained_path).exists():
             self.load_pretrained_weights(pretrained_path)
         
-        # 是否冻结编码器
-        if model_config.get('freeze_encoder', False):
-            self.freeze_encoder()
+        # # 是否冻结编码器
+        # if model_config.get('freeze_encoder', False):
+        #     self.freeze_encoder()
+        # 获取冻结策略配置
+        freezing_config = config.get('freezing_config', {})
+        freezing_strategy = freezing_config.get('strategy', 'none')
+
+        # 向后兼容：如果model_config中设置了freeze_encoder=True，且没有明确设置strategy
+        if (model_config.get('freeze_encoder', False) and 
+            freezing_strategy == 'none' and 
+            'strategy' not in freezing_config):
+            freezing_strategy = 'simple'
+            print("📌 Detected legacy freeze_encoder=True, using 'simple' strategy")
+
+        # 应用冻结策略
+        if freezing_strategy != 'none':
+            self.apply_freezing_strategy(freezing_strategy)
     
     def load_pretrained_weights(self, pretrained_path: str):
         """加载DAM预训练权重"""
@@ -270,7 +284,137 @@ class Depth2Elevation_MultiScale(BaseDepthModel):
         for param in self.height_encoder.parameters():
             param.requires_grad = True
         print("Encoder unfrozen")
-    
+    def freeze_encoder_selectively(self):
+        """精细化冻结策略 - 按论文要求冻结DAM原有组件，解冻新增组件"""
+        print("Applying selective encoder freezing strategy...")
+        
+        # 1. 冻结基础组件（保留DAM的预训练知识）
+        for param in self.height_encoder.patch_embed.parameters():
+            param.requires_grad = False
+        print("  ✓ Frozen patch_embed")
+        
+        # pos_embed和cls_token可以微调（遥感图像可能需要不同的空间关系）
+        self.height_encoder.pos_embed.requires_grad = True
+        self.height_encoder.cls_token.requires_grad = True
+        if hasattr(self.height_encoder, 'register_tokens') and self.height_encoder.register_tokens is not None:
+            self.height_encoder.register_tokens.requires_grad = True
+        print("  ✓ Unfrozen pos_embed, cls_token")
+        
+        # 2. Height Blocks的精细化处理
+        frozen_components = []
+        trainable_components = []
+        
+        for i, height_block in enumerate(self.height_encoder.scale_modulator.height_blocks):
+            # 冻结DAM原有组件
+            for param in height_block.attn.parameters():
+                param.requires_grad = False
+            for param in height_block.norm1.parameters():
+                param.requires_grad = False
+            for param in height_block.norm2.parameters():
+                param.requires_grad = False
+            for param in height_block.mlp.parameters():
+                param.requires_grad = False
+            
+            frozen_components.extend(['attn', 'norm1', 'norm2', 'mlp'])
+            
+            # 解冻新增的additional_mlp（论文明确说明是trainable）
+            for param in height_block.additional_mlp.parameters():
+                param.requires_grad = True
+            
+            trainable_components.append(f'height_block_{i}.additional_mlp')
+        
+        print(f"  ✓ Frozen DAM components in {len(self.height_encoder.scale_modulator.height_blocks)} height blocks")
+        print(f"  ✓ Unfrozen additional_mlp in {len(self.height_encoder.scale_modulator.height_blocks)} height blocks")
+        
+        # 3. 解冻所有scale_adapters（论文说明需要learn）
+        for i, scale_adapter in enumerate(self.height_encoder.scale_modulator.scale_adapters):
+            for param in scale_adapter.parameters():
+                param.requires_grad = True
+            trainable_components.append(f'scale_adapter_{i}')
+        
+        print(f"  ✓ Unfrozen {len(self.height_encoder.scale_modulator.scale_adapters)} scale adapters")
+        
+        # 4. 解冻全局梯度分析器（新增组件）
+        for param in self.height_encoder.scale_modulator.global_gradient_analyzer.parameters():
+            param.requires_grad = True
+        print("  ✓ Unfrozen global gradient analyzer")
+        
+        # 5. 冻结最后的norm层
+        for param in self.height_encoder.norm.parameters():
+            param.requires_grad = False
+        print("  ✓ Frozen final norm layer")
+        
+        # 6. 确保decoder完全可训练（包含梯度自适应边缘模块）
+        for param in self.decoder.parameters():
+            param.requires_grad = True
+        print("  ✓ Decoder remains fully trainable (including GradientAdaptiveEdgeModule)")
+        
+        # 7. 确保新增模块完全可训练（分布重加权相关）
+        if self.enable_reweighting:
+            for param in self.distribution_analyzer.parameters():
+                param.requires_grad = True
+            for param in self.adaptive_loss.parameters():
+                param.requires_grad = True
+            print("  ✓ Distribution reweighting modules remain fully trainable")
+        
+        # 8. 打印参数统计
+        self.print_trainable_parameters()
+
+    def print_trainable_parameters(self):
+        """打印可训练参数的统计信息，用于验证冻结策略"""
+        total_params = 0
+        trainable_params = 0
+        frozen_params = 0
+        
+        component_stats = {}
+        
+        for name, param in self.named_parameters():
+            total_params += param.numel()
+            if param.requires_grad:
+                trainable_params += param.numel()
+            else:
+                frozen_params += param.numel()
+            
+            # 统计各组件的参数情况
+            component = name.split('.')[0] if '.' in name else name
+            if component not in component_stats:
+                component_stats[component] = {'total': 0, 'trainable': 0}
+            component_stats[component]['total'] += param.numel()
+            if param.requires_grad:
+                component_stats[component]['trainable'] += param.numel()
+        
+        print("\n" + "="*60)
+        print("📊 PARAMETER STATISTICS")
+        print("="*60)
+        print(f"Total Parameters:     {total_params:,}")
+        print(f"Trainable Parameters: {trainable_params:,}")
+        print(f"Frozen Parameters:    {frozen_params:,}")
+        print(f"Trainable Ratio:      {trainable_params/total_params*100:.2f}%")
+        
+        print("\n📋 Component Breakdown:")
+        print("-"*40)
+        for component, stats in component_stats.items():
+            ratio = stats['trainable']/stats['total']*100
+            status = "🟢" if ratio > 90 else "🟡" if ratio > 10 else "🔴"
+            print(f"{status} {component:<20}: {stats['trainable']:>8,}/{stats['total']:>8,} ({ratio:>5.1f}%)")
+        print("="*60 + "\n")
+
+    def apply_freezing_strategy(self, strategy: str = "none"):
+        """根据配置应用不同的冻结策略"""
+        strategy = strategy.lower()
+        
+        if strategy == "none":
+            print("🔓 No freezing applied - all parameters trainable")
+            return
+        elif strategy == "simple":
+            self.freeze_encoder()
+        elif strategy == "selective":
+            self.freeze_encoder_selectively()
+        else:
+            raise ValueError(f"Unknown freezing strategy: {strategy}. "
+                            f"Available: ['none', 'simple', 'selective']")
+
+
     def forward(self, 
                x: torch.Tensor, 
                return_multi_scale: bool = None,
