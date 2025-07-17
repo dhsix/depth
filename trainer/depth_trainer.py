@@ -23,7 +23,16 @@ class DepthEstimationTrainer(BaseTrainer):
         # 深度估计特定参数
         self.use_mask = config.get('use_mask', True)
         self.compute_metrics_interval = config.get('compute_metrics_interval', 1)
-    
+        self._log_depth_estimation_setup()
+    def _log_depth_estimation_setup(self):
+        """记录深度估计特定的设置信息"""
+        self.logger.log_info("🏗️ Depth Estimation Training Setup:")
+        self.logger.log_info(f"   📏 Use Mask: {self.use_mask}")
+        self.logger.log_info(f"   📊 Metrics Computation Interval: {self.compute_metrics_interval}")
+        self.logger.log_info(f"   🎯 Multi-scale Output: {getattr(self.model, 'use_multi_scale_output', False)}")
+        
+        if hasattr(self.model, 'loss_fn'):
+            self.logger.log_info(f"   📉 Loss Function: {type(self.model.loss_fn).__name__}")
     def train_step(self, batch: Dict[str, torch.Tensor]) -> Dict[str, float]:
         """单步训练"""
         
@@ -126,8 +135,14 @@ class DepthEstimationTrainer(BaseTrainer):
             try:
                 depth_metrics = evaluate_depth_estimation(pred_for_metrics, targets, masks)
                 step_metrics.update(depth_metrics)
+                # 添加这些额外统计信息
+                step_metrics['valid_pixels'] = masks.sum().item() if masks is not None else targets.numel()
+                step_metrics['total_pixels'] = targets.numel()
+                step_metrics['height_range'] = (targets.max() - targets.min()).item()
+                step_metrics['mean_height'] = targets.mean().item()
             except Exception as e:
-                self.logger.log_info(f"Warning: Failed to compute depth metrics: {e}")
+                # self.logger.log_info(f"Warning: Failed to compute depth metrics: {e}")
+                self.logger.log_warning(f"Failed to compute depth metrics: {e}")
         
         return step_metrics
 
@@ -148,6 +163,10 @@ class MultiScaleDepthTrainer(DepthEstimationTrainer):
         # 多尺度特定参数
         self.scale_weights = config.get('scale_weights', [1.0, 1.0, 1.0, 1.0])
         self.log_scale_losses = config.get('log_scale_losses', True)
+        # ✅ 添加这部分
+        self.logger.log_info("🔄 Multi-Scale Configuration:")
+        self.logger.log_info(f"   ⚖️  Scale Weights: {self.scale_weights}")
+        self.logger.log_info(f"   📊 Log Scale Losses: {self.log_scale_losses}")
     
     def train_step(self, batch: Dict[str, torch.Tensor]) -> Dict[str, float]:
         """多尺度训练步骤"""
@@ -188,8 +207,10 @@ class MultiScaleDepthTrainer(DepthEstimationTrainer):
                     
                     scale_loss = nn.functional.mse_loss(scale_pred, target_resized)
                     step_metrics[f'loss_{scale_key}'] = scale_loss.item()
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.log_warning(f"Failed to compute scale loss for {scale_key}: {e}")
+                # except:
+                #     pass
         
         return step_metrics
     
@@ -221,7 +242,8 @@ class MultiScaleDepthTrainer(DepthEstimationTrainer):
                 depth_metrics = evaluate_depth_estimation(pred_for_metrics, targets, masks)
                 step_metrics.update(depth_metrics)
             except Exception as e:
-                self.logger.log_info(f"Warning: Failed to compute depth metrics: {e}")
+                # self.logger.log_info(f"Warning: Failed to compute depth metrics: {e}")
+                self.logger.log_warning(f"Failed to compute depth metrics: {e}")
         
         # 记录各尺度损失
         if self.log_scale_losses:
@@ -236,8 +258,11 @@ class MultiScaleDepthTrainer(DepthEstimationTrainer):
                     
                     scale_loss = nn.functional.mse_loss(scale_pred, target_resized)
                     step_metrics[f'val_loss_{scale_key}'] = scale_loss.item()
-                except:
-                    pass
+                except Exception as e:
+                    self.logger.log_warning(f"Failed to compute scale loss for {scale_key}: {e}")
+                # except:
+                #     pass
+
         
         return step_metrics
 
