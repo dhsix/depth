@@ -7,7 +7,7 @@ from .GradientAdaptiveEdgeModule import create_depth2elevation_gra_model
 from .im2height import create_im2height_model
 from .losses import get_loss_function
 from .Gra_MultiScaleHeight import create_depth2elevation_multiscale_model
-from .simpleDAM import create_gamus_ndsm_model
+# from .simpleDAM import create_gamus_ndsm_model
 def create_model(config: Dict[str, Any]) -> BaseDepthModel:
     """模型工厂函数"""
     model_name = config.get('model_name', 'depth2elevation')
@@ -21,7 +21,7 @@ def create_model(config: Dict[str, Any]) -> BaseDepthModel:
 
         'im2height': create_im2height_model,
         'depth2elevation_multiscale': create_depth2elevation_multiscale_model,
-        'gamus_ndsm':create_gamus_ndsm_model,
+        # 'gamus_ndsm':create_gamus_ndsm_model,
     }
     
     if model_name not in model_creators:
@@ -38,5 +38,5 @@ __all__ = [
     'create_depth2elevation_multiscale_model',
     # 'create_imele_model',
     'create_im2height_model',
-    'create_gamus_ndsm_model',
+    # 'create_gamus_ndsm_model',
 ]
