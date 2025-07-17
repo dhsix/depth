@@ -39,7 +39,14 @@ class BaseDepthDataset(Dataset):
         depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
         if depth is None:
             raise FileNotFoundError(f"Cannot load depth: {depth_path}")
-        return depth.astype(np.float32)
+            # 假设你的 depth 是 16 位，单位是 cm 或 dm，转成 m 范围是合理的
+        # 如果是 8 位，需要特别注意
+        if depth.dtype == np.uint16:
+            depth = depth / 1000.0  # 转成以米为单位，假如你的单位是 mm
+        elif depth.dtype == np.uint8:
+            depth = depth / 255.0  # 归一化
+        return depth
+        # return depth.astype(np.float32)
     
     def __len__(self) -> int:
         return len(self.samples)
@@ -108,6 +115,25 @@ class GAMUSDataset(BaseDepthDataset):
         
         print(f"Loaded {len(samples)} samples from {split_dir}")
         return samples
+    def _load_depth(self, depth_path: str) -> np.ndarray:
+        """加载GAMUS深度图 - 特殊处理cm单位"""
+        depth = cv2.imread(depth_path, cv2.IMREAD_UNCHANGED)
+        if depth is None:
+            raise FileNotFoundError(f"Cannot load depth: {depth_path}")
+        
+        # GAMUS数据集特殊处理：深度单位是cm，需要转换为米
+        if depth.dtype == np.uint16:
+            # 假设16位深度图，单位是cm，转换为米
+            depth_meters = depth.astype(np.float32) / 100.0
+        elif depth.dtype == np.uint8:
+            # 如果是8位图像，可能需要特殊处理
+            max_height_cm = 25500  # 假设最大高度255米(25500cm)
+            depth_meters = depth.astype(np.float32) * (max_height_cm / 255.0) / 100.0
+        else:
+            # 其他数据类型，假设已经是正确的单位
+            depth_meters = depth.astype(np.float32)
+        
+        return depth_meters
 
 class DFC2019Dataset(BaseDepthDataset):
     """DFC2019数据集"""

@@ -54,6 +54,7 @@ class BaseConfig:
         # 检查数据集路径(但不创建，因为数据在存储服务器上)
         # dataset_path = self.get_dataset_path()
         dataset_path=self.data_root
+        print(f"Using dataset path: {dataset_path}")
         if not os.path.exists(dataset_path):
             print(f"Warning: Dataset path {dataset_path} not accessible!")
             print(f"Please ensure:")
