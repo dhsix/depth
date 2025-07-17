@@ -143,7 +143,7 @@ class MultiScaleLoss(nn.Module):
 class SingleScaleLoss(nn.Module):
     """单尺度损失，用于对比模型"""
     
-    def __init__(self, loss_type: str = 'mse'):
+    def __init__(self, loss_type: str = 'mse',delta: float = 1.0):
         super().__init__()
         
         if loss_type == 'mse':
@@ -152,6 +152,8 @@ class SingleScaleLoss(nn.Module):
             self.criterion = nn.L1Loss()
         elif loss_type == 'smooth_l1':
             self.criterion = nn.SmoothL1Loss()
+        elif loss_type == 'huber':
+            self.criterion = nn.HuberLoss(delta=delta)
         else:
             raise ValueError(f"Unknown loss type: {loss_type}")
     
