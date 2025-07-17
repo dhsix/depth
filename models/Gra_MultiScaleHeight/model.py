@@ -350,9 +350,11 @@ class Depth2Elevation_MultiScale(BaseDepthModel):
             }
         else:
             # 仅使用原有损失
-
-            # 直接返回原始损失函数的输出（保持接口不变）
-            loss_dict = original_loss_dict
+            loss_dict = {
+                'loss': original_loss,
+                **original_loss_dict
+            }
+        
         return loss_dict
         
     def get_model_info(self) -> Dict[str, Any]:

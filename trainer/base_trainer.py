@@ -168,14 +168,30 @@ class BaseTrainer(ABC):
             # 验证阶段
             if epoch % self.val_interval == 0 or epoch == self.num_epochs - 1:
                 val_metrics = self.validate_epoch()
-                
+                # 【修复】过滤掉可能冲突的键
+                filtered_train_metrics = {
+                    k: v for k, v in train_metrics.items() 
+                    if k not in ['total_loss', 'loss']  # 过滤掉会冲突的键
+                }
+                filtered_val_metrics = {
+                    k: v for k, v in val_metrics.items() 
+                    if k not in ['total_loss', 'loss']  # 过滤掉会冲突的键
+                }
+                # # 记录epoch结果
+                # self.logger.log_epoch(
+                #     epoch=epoch,
+                #     train_loss=train_metrics.get('total_loss', 0),
+                #     val_loss=val_metrics.get('total_loss', 0),
+                #     **{f"train_{k}": v for k, v in train_metrics.items() if k != 'total_loss'},
+                #     **{f"val_{k}": v for k, v in val_metrics.items() if k != 'total_loss'}
+                # )
                 # 记录epoch结果
                 self.logger.log_epoch(
                     epoch=epoch,
-                    train_loss=train_metrics.get('total_loss', 0),
-                    val_loss=val_metrics.get('total_loss', 0),
-                    **{f"train_{k}": v for k, v in train_metrics.items() if k != 'total_loss'},
-                    **{f"val_{k}": v for k, v in val_metrics.items() if k != 'total_loss'}
+                    train_loss=train_metrics.get('total_loss', train_metrics.get('loss', 0)),
+                    val_loss=val_metrics.get('total_loss', val_metrics.get('loss', 0)),
+                    **{f"train_{k}": v for k, v in filtered_train_metrics.items()},
+                    **{f"val_{k}": v for k, v in filtered_val_metrics.items()}
                 )
                 
                 # 保存检查点
@@ -199,12 +215,22 @@ class BaseTrainer(ABC):
             
             else:
                 # 只记录训练指标
+                filtered_train_metrics = {
+                    k: v for k, v in train_metrics.items() 
+                    if k not in ['total_loss', 'loss']
+                }
                 self.logger.log_epoch(
                     epoch=epoch,
-                    train_loss=train_metrics.get('total_loss', 0),
+                    train_loss=train_metrics.get('total_loss', train_metrics.get('loss', 0)),
                     val_loss=float('nan'),
-                    **{f"train_{k}": v for k, v in train_metrics.items() if k != 'total_loss'}
+                    **{f"train_{k}": v for k, v in filtered_train_metrics.items()}
                 )
+                # self.logger.log_epoch(
+                #     epoch=epoch,
+                #     train_loss=train_metrics.get('total_loss', 0),
+                #     val_loss=float('nan'),
+                #     **{f"train_{k}": v for k, v in train_metrics.items() if k != 'total_loss'}
+                # )
         
         training_time = time.time() - training_start_time
         self.logger.log_info(f"Training completed in {training_time/3600:.2f} hours")

@@ -103,8 +103,15 @@ class MultiScaleHeightDistributionAnalyzer(nn.Module):
                 # 计算直方图
                 hist = torch.histc(height_flat, bins=self.num_height_bins, 
                                  min=0, max=self.max_height)
-                # 归一化为概率密度
-                density = hist / (hist.sum() + 1e-8)
+
+                hist_sum = hist.sum()
+                if hist_sum > 1e-8:
+                    density = hist / hist_sum
+                else:
+                    density = torch.ones_like(hist) / self.num_height_bins
+                
+                # # 归一化为概率密度
+                # density = hist / (hist.sum() + 1e-8)
                 batch_distributions.append(density)
             
             return torch.stack(batch_distributions, dim=0)
@@ -113,7 +120,12 @@ class MultiScaleHeightDistributionAnalyzer(nn.Module):
             height_flat = height_values.flatten()
             hist = torch.histc(height_flat, bins=self.num_height_bins,
                              min=0, max=self.max_height)
-            density = hist / (hist.sum() + 1e-8)
+            hist_sum = hist.sum()
+            if hist_sum > 1e-8:
+                density = hist / hist_sum
+            else:
+                density = torch.ones_like(hist) / self.num_height_bins
+            # density = hist / (hist.sum() + 1e-8)
             return density
     
     def apply_label_distribution_smoothing(self, empirical_dist: torch.Tensor) -> torch.Tensor:
@@ -390,7 +402,13 @@ class AdaptiveMultiScaleLoss(nn.Module):
         
         # 错误调制因子：错误越大，权重越高
         error_mean = abs_error.mean() + 1e-8
-        error_factor = torch.pow(abs_error / error_mean, self.focal_gamma)
+        error_ratio = abs_error / error_mean
+        error_ratio = torch.clamp(error_ratio, min=1e-8, max=10.0)  # 限制范围
+        
+        # 限制gamma防止pow爆炸
+        gamma = min(self.focal_gamma, 2.0)  # 限制gamma最大为2
+        error_factor = torch.pow(error_ratio, gamma)
+        # error_factor = torch.pow(abs_error / error_mean, self.focal_gamma)
         
         # 综合调制
         focal_modulation = (
