@@ -41,10 +41,13 @@ class BaseTrainer(ABC):
             log_dir=config.get('log_dir', './logs'),
             experiment_name=config.get('experiment_name', 'experiment')
         )
-        
+        experiment_checkpoint_dir = os.path.join(
+            config.get('checkpoint_dir', './checkpoints'),
+            f"{config.get('experiment_name', 'experiment')}"
+        )
         # 设置检查点管理器
         self.checkpoint_manager = CheckpointManager(
-            checkpoint_dir=config.get('checkpoint_dir', './checkpoints'),
+            checkpoint_dir=experiment_checkpoint_dir,
             max_keep=config.get('max_keep_ckpts', 3),
             save_best=True
         )
@@ -177,14 +180,6 @@ class BaseTrainer(ABC):
                     k: v for k, v in val_metrics.items() 
                     if k not in ['total_loss', 'loss']  # 过滤掉会冲突的键
                 }
-                # # 记录epoch结果
-                # self.logger.log_epoch(
-                #     epoch=epoch,
-                #     train_loss=train_metrics.get('total_loss', 0),
-                #     val_loss=val_metrics.get('total_loss', 0),
-                #     **{f"train_{k}": v for k, v in train_metrics.items() if k != 'total_loss'},
-                #     **{f"val_{k}": v for k, v in val_metrics.items() if k != 'total_loss'}
-                # )
                 # 记录epoch结果
                 self.logger.log_epoch(
                     epoch=epoch,
@@ -225,12 +220,6 @@ class BaseTrainer(ABC):
                     val_loss=float('nan'),
                     **{f"train_{k}": v for k, v in filtered_train_metrics.items()}
                 )
-                # self.logger.log_epoch(
-                #     epoch=epoch,
-                #     train_loss=train_metrics.get('total_loss', 0),
-                #     val_loss=float('nan'),
-                #     **{f"train_{k}": v for k, v in train_metrics.items() if k != 'total_loss'}
-                # )
         
         training_time = time.time() - training_start_time
         self.logger.log_info(f"Training completed in {training_time/3600:.2f} hours")
@@ -270,7 +259,11 @@ class BaseTrainer(ABC):
     def _save_visualization_samples(self, epoch: int):
         """保存可视化样本"""
         try:
-            save_dir = f"{self.config.get('result_dir', './results')}/samples_epoch_{epoch}"
+            experiment_result_dir = os.path.join(
+                self.config.get('result_dir', './results'),
+                f"{self.config.get('experiment_name', 'experiment')}"
+            )
+            save_dir = f"{experiment_result_dir}/samples_epoch_{epoch}"
             save_prediction_samples(self.model, self.val_loader, save_dir, num_samples=5)
         except Exception as e:
             self.logger.log_info(f"Warning: Failed to save visualization samples: {e}")
@@ -278,7 +271,11 @@ class BaseTrainer(ABC):
     def _plot_training_curves(self):
         """绘制训练曲线"""
         try:
-            save_path = f"{self.config.get('result_dir', './results')}/training_curves.png"
+            experiment_result_dir = os.path.join(
+                self.config.get('result_dir', './results'),
+                f"{self.config.get('experiment_name', 'experiment')}"
+            )
+            save_path = f"{experiment_result_dir}/training_curves.png"
             fig = DepthVisualizer.plot_training_curves(
                 self.logger.metrics_history, save_path
             )
