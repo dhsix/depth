@@ -35,10 +35,28 @@ class DepthMetrics:
             target_valid = target.flatten()
         
         return torch.sqrt(torch.mean((pred_valid - target_valid) ** 2)).item()
-    
     @staticmethod
     def si_rmse(pred: torch.Tensor, target: torch.Tensor, mask: Optional[torch.Tensor] = None) -> float:
-        """Scale-Invariant Root Mean Square Error"""
+        """Scale-Invariant Root Mean Square Error - 按论文公式"""
+        if mask is not None:
+            valid_mask = mask.bool()
+            if valid_mask.sum() == 0:
+                return float('inf')
+            pred_valid = pred[valid_mask]
+            target_valid = target[valid_mask]
+        else:
+            pred_valid = pred.flatten()
+            target_valid = target.flatten()
+        
+        # SI_RMSE = RMSE / σy
+        rmse = torch.sqrt(torch.mean((pred_valid - target_valid) ** 2))
+        target_std = torch.std(target_valid)
+        si_rmse = rmse / target_std if target_std > 1e-8 else rmse
+        
+        return si_rmse.item()
+    @staticmethod
+    def logsi_rmse(pred: torch.Tensor, target: torch.Tensor, mask: Optional[torch.Tensor] = None) -> float:
+        """Log-based Scale-Invariant Root Mean Square Error"""
         if mask is not None:
             valid_mask = mask.bool()
             if valid_mask.sum() == 0:
@@ -55,9 +73,9 @@ class DepthMetrics:
         log_target = torch.log(target_valid + epsilon)
         
         diff = log_pred - log_target
-        si_rmse = torch.sqrt(torch.mean(diff ** 2) - (torch.mean(diff) ** 2))
+        logsi_rmse = torch.sqrt(torch.mean(diff ** 2) - (torch.mean(diff) ** 2))
         
-        return si_rmse.item()
+        return logsi_rmse.item()
     
     @staticmethod
     def abs_rel(pred: torch.Tensor, target: torch.Tensor, mask: Optional[torch.Tensor] = None) -> float:
@@ -140,6 +158,7 @@ def evaluate_depth_estimation(pred: torch.Tensor,
         'MAE': DepthMetrics.mae(pred, target, mask),
         'RMSE': DepthMetrics.rmse(pred, target, mask),
         'SI_RMSE': DepthMetrics.si_rmse(pred, target, mask),
+        'LOGSI_RMSE': DepthMetrics.logsi_rmse(pred, target, mask),
         'AbsRel': DepthMetrics.abs_rel(pred, target, mask),
         'SqRel': DepthMetrics.sq_rel(pred, target, mask),
         'δ<1.25': DepthMetrics.delta_threshold(pred, target, 1.25, mask),
@@ -210,7 +229,7 @@ class MetricsTracker:
         summary_lines = []
         
         # 主要指标
-        main_metrics = ['MAE', 'RMSE', 'SI_RMSE']
+        main_metrics = ['MAE', 'RMSE', 'SI_RMSE','LOGSI_RMSE']
         summary_lines.append("Main Metrics:")
         for metric in main_metrics:
             if metric in metrics:
