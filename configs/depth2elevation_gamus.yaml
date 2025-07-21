@@ -9,6 +9,7 @@ device: "cuda:1"
 # 数据设置
 data_root: '/home/hudong26/HeightData/GAMUS'
 dataset_name: "GAMUS"
+load_mask: true
 input_size: 448
 patch_size: 14
 batch_size: 8

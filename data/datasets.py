@@ -78,7 +78,11 @@ class BaseDepthDataset(Dataset):
 
 class GAMUSDataset(BaseDepthDataset):
     """GAMUS数据集"""
-    
+    def __init__(self, *args, **kwargs):
+        # GAMUS语义类别定义
+        self.HEIGHT_CLASSES = [2, 3, 6]  # Low-vegetation, Building, Tree
+        self.EXCLUDE_CLASSES = [0, 1, 4, 5]  # Background, Ground, Water, Road
+        super().__init__(*args, **kwargs)
     def _load_samples(self) -> list:
         # 使用完整的数据集路径
         dataset_root = self.data_root  # 这里data_root应该是完整路径，如 "./datasets/GAMUS"
@@ -94,12 +98,21 @@ class GAMUSDataset(BaseDepthDataset):
         
         image_dir = split_dir / "images"
         depth_dir = split_dir / "depths"
+        mask_dir= split / "masks"
         
         if not image_dir.exists():
             raise FileNotFoundError(f"Image directory not found: {image_dir}")
         if not depth_dir.exists():
             raise FileNotFoundError(f"Depth directory not found: {depth_dir}")
-        
+            # 检查mask目录是否存在
+        mask_available = mask_dir.exists()
+        if self.load_mask and not mask_available:
+            print(f"Warning: load_mask=True but mask directory not found: {mask_dir}")
+            print("Continuing without masks...")
+            self.load_mask = False
+
+        if mask_available:
+            print(f"Found mask directory: {mask_dir}")
         samples = []
         for image_path in sorted(image_dir.glob("*.jpg")):
             # 对应的深度文件
@@ -108,12 +121,29 @@ class GAMUSDataset(BaseDepthDataset):
             depth_path=depth_dir/depth_filename
             
             if depth_path.exists():
-                samples.append({
+                sample_info = {
                     'image_path': str(image_path),
                     'depth_path': str(depth_path)
-                })
+                }
+                
+                # 如果需要加载mask，添加mask路径
+                if self.load_mask and mask_available:
+                    mask_filename = image_path.name.replace("RGB", "CLS").replace(".jpg", ".png")
+                    mask_path = mask_dir / mask_filename
+                    
+                    if mask_path.exists():
+                        sample_info['mask_path'] = str(mask_path)
+                    else:
+                        print(f"Warning: mask file not found: {mask_path}")
+                        # 可以选择跳过这个样本，或者设置mask_path为None
+                        continue  # 跳过没有mask的样本
+                
+                samples.append(sample_info)
         
         print(f"Loaded {len(samples)} samples from {split_dir}")
+        if self.load_mask:
+            mask_count = sum(1 for s in samples if 'mask_path' in s)
+            print(f"  - {mask_count} samples have masks")
         return samples
     def _load_depth(self, depth_path: str) -> np.ndarray:
         """加载GAMUS深度图 - 特殊处理cm单位"""
@@ -134,6 +164,71 @@ class GAMUSDataset(BaseDepthDataset):
             depth_meters = depth.astype(np.float32)
         
         return depth_meters
+    def create_height_evaluation_mask(self, semantic_mask: np.ndarray) -> np.ndarray:
+        """
+        创建用于高度评估的mask
+        只包含有高度意义的类别：Low-vegetation, Building, Tree
+        
+        Args:
+            semantic_mask: 语义分割mask (0-6的类别标签)
+        
+        Returns:
+            height_mask: 二值mask，1表示有高度意义的区域
+        """
+        height_mask = np.zeros_like(semantic_mask, dtype=np.float32)
+        
+        # 只包含有高度意义的类别
+        for class_id in self.HEIGHT_CLASSES:
+            height_mask[semantic_mask == class_id] = 1.0
+        
+        return height_mask
+    def __getitem__(self, idx: int) -> Dict[str, Any]:
+        sample_info = self.samples[idx]
+        
+        # 加载图像和深度
+        image = self._load_image(sample_info['image_path'])
+        depth = self._load_depth(sample_info['depth_path'])
+        
+        sample = {
+            'image': image,
+            'depth': depth,
+            'image_path': sample_info['image_path'],
+            'depth_path': sample_info['depth_path']
+        }
+        
+        # 🔥 特殊处理GAMUS的语义mask
+        if self.load_mask and 'mask_path' in sample_info:
+            # 加载语义分割mask
+            semantic_mask = cv2.imread(sample_info['mask_path'], cv2.IMREAD_GRAYSCALE)
+            if semantic_mask is None:
+                print(f"Warning: Cannot load mask: {sample_info['mask_path']}")
+            else:
+                # 创建用于高度评估的mask
+                height_mask = self.create_height_evaluation_mask(semantic_mask)
+                
+                # 保存两种mask
+                sample['semantic_mask'] = semantic_mask.astype(np.uint8)  # 原始语义mask
+                sample['mask'] = height_mask  # 用于高度评估的二值mask
+                sample['mask_path'] = sample_info['mask_path']
+                
+                # 添加调试信息
+                unique_classes = np.unique(semantic_mask)
+                valid_pixels = np.sum(height_mask > 0)
+                total_pixels = height_mask.size
+                coverage = valid_pixels / total_pixels
+                
+                sample['mask_info'] = {
+                    'unique_classes': unique_classes.tolist(),
+                    'height_coverage': coverage,
+                    'valid_pixels': int(valid_pixels),
+                    'total_pixels': int(total_pixels)
+                }
+        
+        # 应用变换
+        if self.transform:
+            sample = self.transform(sample)
+        
+        return sample
 
 class DFC2019Dataset(BaseDepthDataset):
     """DFC2019数据集"""
