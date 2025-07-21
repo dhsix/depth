@@ -87,6 +87,7 @@ class DepthVisualizer:
     def visualize_prediction_batch(images: torch.Tensor,
                                  predictions: torch.Tensor,
                                  targets: torch.Tensor,
+                                 masks:Optional[torch.Tensor] = None,
                                  save_path: Optional[str] = None,
                                  max_samples: int = 4) -> plt.Figure:
         """可视化一个batch的预测结果"""
@@ -100,10 +101,12 @@ class DepthVisualizer:
             predictions = predictions.cpu()
         if targets.is_cuda:
             targets = targets.cpu()
-        
+        if masks is not None and masks.is_cuda:
+            masks = masks.cpu()
         images_np = images.numpy()
         predictions_np = predictions.numpy()
         targets_np = targets.numpy()
+        masks_np = masks.numpy() if masks is not None else None
         
         # 反归一化图像
         mean = np.array([0.485, 0.456, 0.406])
@@ -133,11 +136,14 @@ class DepthVisualizer:
             )
             vis_images.append(pred_colored / 255.0)
             vis_titles.append(f'Pred {i+1}')
-        
+            if masks_np is not None:
+                vis_images.append(masks_np[i])
+                vis_titles.append(f'Mask {i+1}')
+        ncols = 4 if masks_np is not None else 3
         # 创建网格图
         fig = DepthVisualizer.create_comparison_grid(
-            vis_images, vis_titles, ncols=3,
-            figsize=(12, 4 * batch_size)
+            vis_images, vis_titles, ncols=ncols,
+            figsize=(ncols*4, 4 * batch_size)
         )
         
         if save_path:
@@ -209,11 +215,13 @@ def save_prediction_samples(model, data_loader, save_dir: str, num_samples: int 
             
             images = batch['image']
             targets = batch['depth']
+            masks = batch.get('mask')
             
             if torch.cuda.is_available():
                 images = images.cuda()
                 targets = targets.cuda()
-            
+                if masks is not None:
+                    masks = masks.cuda()
             # 预测
             predictions = model.predict(images)
             if isinstance(predictions, dict):
@@ -221,7 +229,7 @@ def save_prediction_samples(model, data_loader, save_dir: str, num_samples: int 
             
             # 可视化
             fig = DepthVisualizer.visualize_prediction_batch(
-                images, predictions, targets, max_samples=2
+                images, predictions, targets, masks=masks,max_samples=2
             )
             
             # 保存

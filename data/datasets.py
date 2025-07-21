@@ -98,7 +98,7 @@ class GAMUSDataset(BaseDepthDataset):
         
         image_dir = split_dir / "images"
         depth_dir = split_dir / "depths"
-        mask_dir= split / "masks"
+        mask_dir= split_dir / "masks"
         
         if not image_dir.exists():
             raise FileNotFoundError(f"Image directory not found: {image_dir}")

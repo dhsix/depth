@@ -10,7 +10,7 @@ def collate_fn(batch):
     result = {}
     
     for key in keys:
-        if key in ['image', 'depth', 'mask']:
+        if key in ['image', 'depth', 'mask','semantic_mask']:
             # 数值数据，直接stack
             result[key] = torch.stack([item[key] for item in batch])
         else:
@@ -21,7 +21,8 @@ def collate_fn(batch):
 
 def create_data_loaders(config) -> Tuple[DataLoader, DataLoader, Optional[DataLoader]]:
     """创建训练、验证和测试数据加载器"""
-    
+    # 🔥 从配置中获取是否加载mask
+    load_mask = getattr(config, 'load_mask', True)
     # 获取数据变换
     train_transform = get_transforms(
         {
@@ -41,9 +42,9 @@ def create_data_loaders(config) -> Tuple[DataLoader, DataLoader, Optional[DataLo
     )
     
     # 获取完整的数据集路径
-    # dataset_path = config.get_dataset_path()
+
     dataset_path=config.data_root
-    #print(dataset_path)
+
     
     # 创建数据集
     train_dataset = get_dataset(
@@ -51,7 +52,7 @@ def create_data_loaders(config) -> Tuple[DataLoader, DataLoader, Optional[DataLo
         data_root=dataset_path,  # 传入完整路径
         split='train',
         transform=train_transform,
-        load_mask=True
+        load_mask=load_mask
     )
     
     val_dataset = get_dataset(
@@ -59,7 +60,7 @@ def create_data_loaders(config) -> Tuple[DataLoader, DataLoader, Optional[DataLo
         data_root=dataset_path,  # 传入完整路径
         split='val',
         transform=val_transform,
-        load_mask=True
+        load_mask=load_mask
     )
     
     # 创建数据加载器
@@ -91,7 +92,7 @@ def create_data_loaders(config) -> Tuple[DataLoader, DataLoader, Optional[DataLo
             data_root=dataset_path,  # 使用完整路径
             split='test',
             transform=val_transform,
-            load_mask=True
+            load_mask=load_mask
         )
         
         test_loader = DataLoader(
@@ -123,13 +124,13 @@ def get_sample_batch(config, split: str = 'train') -> Dict[str, Any]:
         }, 
         is_training=False
     )
-    
+    load_mask = getattr(config, 'load_mask', True)
     dataset = get_dataset(
         dataset_name=config.dataset_name,
         data_root=config.data_root,
         split=split,
         transform=transform,
-        load_mask=True
+        load_mask=load_mask
     )
     
     loader = DataLoader(dataset, batch_size=2, collate_fn=collate_fn)

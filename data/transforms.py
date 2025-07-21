@@ -68,6 +68,21 @@ class Resize:
                 (width, height), 
                 interpolation=cv2.INTER_NEAREST
             )
+        # 新增：处理mask数据
+        if "mask" in sample:
+            sample["mask"] = cv2.resize(
+                sample["mask"], 
+                (width, height), 
+                interpolation=cv2.INTER_NEAREST  # mask用最近邻插值
+            )
+        
+        # 新增：处理语义mask数据
+        if "semantic_mask" in sample:
+            sample["semantic_mask"] = cv2.resize(
+                sample["semantic_mask"], 
+                (width, height), 
+                interpolation=cv2.INTER_NEAREST  # 语义标签必须用最近邻插值
+            )
         
         return sample
 
@@ -89,6 +104,11 @@ class PrepareForNet:
         
         if "depth" in sample:
             sample["depth"] = np.ascontiguousarray(sample["depth"]).astype(np.float32)
+        if "mask" in sample:
+            sample["mask"] = np.ascontiguousarray(sample["mask"]).astype(np.float32)
+        
+        if "semantic_mask" in sample:
+            sample["semantic_mask"] = np.ascontiguousarray(sample["semantic_mask"]).astype(np.uint8)
         
         return sample
 
@@ -96,7 +116,7 @@ class ToTensor:
     """转换为Tensor"""
     def __call__(self, sample: Dict[str, Any]) -> Dict[str, Any]:
         for key in sample:
-            if key in ["image", "depth", "mask"]:
+            if key in ["image", "depth", "mask","semantic_mask"]:
                 sample[key] = torch.from_numpy(sample[key])
         return sample
 
@@ -110,6 +130,12 @@ class RandomHorizontalFlip:
             sample["image"] = np.fliplr(sample["image"]).copy()
             if "depth" in sample:
                 sample["depth"] = np.fliplr(sample["depth"]).copy()
+                        # 🔥 需要添加：处理mask
+            if "mask" in sample:
+                sample["mask"] = np.fliplr(sample["mask"]).copy()
+            # 🔥 需要添加：处理语义mask
+            if "semantic_mask" in sample:
+                sample["semantic_mask"] = np.fliplr(sample["semantic_mask"]).copy()
         return sample
 
 class ColorJitter:
