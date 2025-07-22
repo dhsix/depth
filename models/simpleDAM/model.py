@@ -68,6 +68,9 @@ class GAMUSNDSMPredictor(BaseDepthModel):
             self.loss_fn = SingleScaleLoss('mse')
         elif loss_type == 'smooth_l1':
             self.loss_fn = SingleScaleLoss('smooth_l1')
+        elif loss_type == 'huber':
+            self.loss_fn = SingleScaleLoss('huber')
+
         else:
             print(f"警告: 未知损失类型 {loss_type}，使用默认 smooth_l1")
             self.loss_fn = SingleScaleLoss('smooth_l1')

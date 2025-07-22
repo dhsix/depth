@@ -45,12 +45,12 @@ loss_config:
 
 # 训练器配置
 trainer_type: "depth"
-use_multi_scale_output: false
-compute_metrics_interval: 1
+# use_multi_scale_output: false
+# compute_metrics_interval: 1
 # log_scale_losses: true
 
 # 数据增强配置
 augmentation_config:
-  horizontal_flip: 0.5
-  color_jitter: 0.5
+  horizontal_flip: 0
+  color_jitter: 0
   gaussian_blur: 0.0

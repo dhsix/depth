@@ -119,15 +119,29 @@ class Im2HeightModel(BaseDepthModel):
         
         # 配置参数
         self.input_channels = config.get('input_channels', 3)
-        self.loss_type = config.get('loss_type', 'combined')
-        
+        # self.loss_type = config.get('loss_type', 'combined')
+        # 修复后的代码  
+        model_config = config.get('model_config', {})
+        loss_config = config.get('loss_config', {})
+        self.loss_type = loss_config.get('type', 'l1')
+        self.use_multi_scale_output = False
+        # 验证损失类型
+        if self.loss_type not in ['l1', 'mse', 'combined', 'ssim_combined']:
+            print(f"Warning: Unsupported loss type '{self.loss_type}' for Im2Height. Using 'l1'.")
+            self.loss_type = 'l1'
         # 构建核心模型
         self.core_model = Im2HeightCore(self.input_channels)
         
     def forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         """前向传播"""
         return self.core_model(x)
-    
+    def predict(self, x: torch.Tensor, return_multi_scale: bool = False) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
+        """
+        预测接口，保持与其他模型一致
+        训练器会优先调用这个方法而不是forward
+        """
+        output = self.forward(x)
+        return output    
     def compute_loss(self, 
                     predictions: torch.Tensor, 
                     targets: torch.Tensor,
