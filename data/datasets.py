@@ -80,8 +80,8 @@ class GAMUSDataset(BaseDepthDataset):
     """GAMUS数据集"""
     def __init__(self, *args, **kwargs):
         # GAMUS语义类别定义
-        self.HEIGHT_CLASSES = [2, 3, 6]  # Low-vegetation, Building, Tree
-        self.EXCLUDE_CLASSES = [0, 1, 4, 5]  # Background, Ground, Water, Road
+        self.HEIGHT_CLASSES = [3, 6]  # Low-vegetation, Building, Tree
+        self.EXCLUDE_CLASSES = [0, 1, 2, 4, 5]  # Background, Ground, Water, Road
         super().__init__(*args, **kwargs)
     def _load_samples(self) -> list:
         # 使用完整的数据集路径

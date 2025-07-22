@@ -161,7 +161,7 @@ class MultiScaleDepthTrainer(DepthEstimationTrainer):
         super().__init__(model, train_loader, val_loader, optimizer, scheduler, config, device)
         
         # 多尺度特定参数
-        self.scale_weights = config.get('scale_weights', [1.0, 1.0, 1.0, 1.0])
+        self.scale_weights = config.get('scale_weights', [0.125, 0.25, 0.5, 1.0])
         self.log_scale_losses = config.get('log_scale_losses', True)
         # ✅ 添加这部分
         self.logger.log_info("🔄 Multi-Scale Configuration:")
