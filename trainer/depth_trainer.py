@@ -88,8 +88,7 @@ class DepthEstimationTrainer(BaseTrainer):
         
         images = batch['image']
         targets = batch['depth']
-        masks = batch.get('mask') if self.use_mask else None
-        
+        masks = batch.get('mask',None) 
         # 前向传播
         if hasattr(self.model, 'predict'):
             if hasattr(self.model, 'use_multi_scale_output') and self.model.use_multi_scale_output:

@@ -59,8 +59,8 @@ class GAMUSNDSMPredictor(BaseDepthModel):
         self.ndsm_head = SimpleNDSMHead(input_channels=1)
         
         # 损失函数
-        loss_config = config.get('loss_config', {'type': 'l1'})
-        loss_type = loss_config.get('type', 'l1')
+        loss_config = config.get('loss_config', {'base_loss': 'l1'})
+        loss_type = loss_config.get('base_loss', 'l1')
         
         if loss_type == 'l1':
             self.loss_fn = SingleScaleLoss('l1')
