@@ -1,0 +1,65 @@
+# Depth2Elevation - GAMUS Dataset Configuration
+
+# 基本设置
+model_name: "gamus_ndsm"
+experiment_name: "gamus_ndsm_none_frozen_mseLoss_bigLR"
+seed: 42
+device: "cuda:0"
+
+# 数据设置
+data_root: '/home/hudong26/HeightData/GAMUS'
+dataset_name: "GAMUS"
+input_size: 448
+patch_size: 14
+batch_size: 8
+num_workers: 1
+# # 🆕 精细化冻结策略配置
+# freezing_config:
+#   strategy: "none"          # 选项: "none", "simple", "selective"
+#   freeze_patch_embed: false       # 是否冻结patch embedding
+#   unfreeze_positional: true      # 是否解冻位置编码相关参数
+#   print_stats: true             # 是否打印详细的参数统计信息
+
+# 训练设置
+num_epochs: 50
+learning_rate: 1.0e-4
+weight_decay: 0.01
+optimizer: "adamw"
+scheduler: "constant"
+
+# 验证和保存
+val_interval: 1
+save_interval: 10
+max_keep_ckpts: 3
+
+# 路径设置
+checkpoint_dir: "./checkpoints"
+log_dir: "./logs"
+result_dir: "./experiments"
+
+# 模型配置
+model_config:
+  encoder: "vitb"  # vits, vitb, vitl, vitg
+  img_size: 448
+  patch_size: 14
+  use_pretrained_dpt: true
+  pretrained_path: "/mnt/data1/UserData/hudong26/Height/Depth-Anything-V2/checkpoints/depth_anything_v2_vitb.pth"
+  freeze_encoder: false
+
+
+# 损失函数配置
+loss_config:
+  type: "single_scale_loss"
+  base_loss: "mse"               # 基础损失函数: smooth_l1, mse, mae
+
+# 训练器配置
+trainer_type: "depth"
+# use_multi_scale_output: false
+# compute_metrics_interval: 1
+# log_scale_losses: false
+
+# 数据增强配置
+augmentation_config:
+  horizontal_flip: 0.5
+  color_jitter: 0.5
+  gaussian_blur: 0.0

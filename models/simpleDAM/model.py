@@ -17,8 +17,9 @@ from .decoder import SimplifiedDPTHead, SimpleNDSMHead
 
 # 尝试导入DINOv2相关模块
 try:
-    from dinov2 import DINOv2
+    from .dinov2 import DINOv2
     DINOV2_AVAILABLE = True
+    print("import dinov2")
 except ImportError:
     DINOV2_AVAILABLE = False
     print("警告: DINOv2模块不可用，将使用占位符实现")

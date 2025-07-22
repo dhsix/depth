@@ -15,6 +15,7 @@ class BaseConfig:
     # 数据设置
     data_root: str = "/data/remote_sensing_datasets"  # 存储服务器上的数据根目录
     dataset_name: str = "GAMUS"  # GAMUS, DFC2019, Vaihingen
+    load_mask: bool = True
     input_size: int = 448
     patch_size: int = 14
     batch_size: int = 16
@@ -26,7 +27,12 @@ class BaseConfig:
     weight_decay: float = 0.01
     optimizer: str = "adamw"
     scheduler: str = "constant"
-    
+    # 数据增强
+    augmentation_config: Dict[str, Any] = field(default_factory=lambda: {
+        'horizontal_flip': 0.5,
+        'color_jitter': 0.5,
+        'gaussian_blur': 0.5,
+    })
     # 验证和保存
     val_interval: int = 5
     save_interval: int = 10

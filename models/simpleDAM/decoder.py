@@ -111,7 +111,15 @@ class SimplifiedDPTHead(nn.Module):
                 x = x[0]  # 取patch features，忽略class token
         else:
             x = features
-        
+        while isinstance(x, tuple):
+            if len(x) >= 1:
+                x = x[0]  # 总是取第一个元素
+            else:
+                raise ValueError("空tuple无法处理")
+    
+        # 确保x是tensor
+        if not isinstance(x, torch.Tensor):
+            raise TypeError(f"期望tensor，但得到: {type(x)}")
         # 如果是token格式，转换为conv格式
         if x.dim() == 3:  # [B, N, C]
             B, N, C = x.shape
